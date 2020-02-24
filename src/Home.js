@@ -2,13 +2,14 @@ import React from 'react';
 import Header from './Header';
 import cookie from 'react-cookies'; 
 import axios from 'axios';
-
+import $ from 'jquery';
 
 
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {gameID: '1', comment:'', rating: ''};
+    var curGame = cookie.load('game')?JSON.parse(cookie.load('game')):{'name':'', 'id':''};
+    this.state = {comment:'', rating: '', data:[], game:curGame, games:[]};
   }
   //----------------------------------------------------------------------
    onChange = (e) => { 
@@ -28,16 +29,76 @@ class Home extends React.Component {
       alert("System error occurred: "+e.message);
     }
   }
+   //-----------------------------------------------------------------------
+   rateGame = (e) =>{
+    e.preventDefault();
 
+    try {
+       var i =  e.target.name.substring(1);
+       var game = this.state.data[i];
+    /*   cookie.save('game', game.id, { path: '/' });
+       window.location.reload();*/
+   } catch (e) {
+     alert("System error occurred: "+e.message);
+   }
+ } 
+ //-----------------------------------
+ backToGames(){
+    cookie.remove('game', { path: '/' });
+    window.location.reload();
+ }
+//-------------------------------------------------------------
   dashboard(){
       let userCookie =  JSON.parse(cookie.load('user').substring(2));
        
-      if (userCookie.username == 'admin')
-      return (<h2>Admin Dashboard</h2>);
+      if (userCookie.username == 'admin'){
+        if (this.state.games.length == 0)
+        axios.get('/ratings', {})
+        .then(res => this.setState({ games: res.data }))
+         .catch();       
+      return  (<div id='gameListHolder'><h2>All game ratings for the last week</h2>
+          <table>
+            <thead><tr><td>Game ID</td><td>Game Name</td><td>Rating</td></tr></thead>
+            <tbody>
+          {this.state.games.map((item, i) => {            
+            return (
+              <tr key={i}> 
+                <td>{item.id}</td><td>{item.name}</td><td>{item.avgFB}</td>
+              </tr>
+            );
+            })}    
+            </tbody></table></div>); 
+       
+      
+      }
 
+      if (!cookie.load('game')){
+        if (this.state.data.length == 0)
+        axios.get('/games', {})
+        .then(res => this.setState({ data: res.data }))
+         .catch();       
+      return  (<div id='gameListHolder'><h2>List of games to rate</h2>
+          <ul>
+          {this.state.data.map((item, i) => {
+            let formName = "f"+i;
+            if (!item.feedbackID)
+            return (
+              <li key={i}>
+              <form onSubmit={this.rateGame} name={formName}>
+                <input type='hidden' value={item.id} name='gameID'/>
+                <button >Rate {item.name}</button>
+              </form>
+              </li>
+            );
+    
+            return (<li key={i}>You rated  <b>{item.name}</b> with score {item.rating}</li>);
+            })}
+        </ul></div>);  
+      }       
+      
       return (
          <div>
-           <h2>Rate a game</h2>
+           <h2>Rate {this.state.game.name}</h2>
            <form onSubmit = {this.rateForm} id='ratingForm'>
              <label>Rating</label>
                 <select name='rating' onChange = {this.onChange}>
@@ -51,6 +112,7 @@ class Home extends React.Component {
                 <input type='text'  onChange = {this.onChange} name='feedback'/>  
               <button>Rate Game</button>
            </form>
+           <button onClick={this.backToGames}>Back to game List</button>
          </div>
       )  
   }

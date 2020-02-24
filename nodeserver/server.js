@@ -78,11 +78,11 @@ app.get("/ratings", (req, res)=>{
   var weekEarlier = new Date();
    weekEarlier.setDate(weekEarlier.getDate() - 7);
 
-  if (isEmpty(date2)){
-    date2 = curDate.toISOString().substring(0,10).replace(/\-/,''); 
+  if (!date2){
+    date2 = curDate.toISOString().substring(0,10).replace(/\-/,'').replace(/\-/,''); 
   }
-  if (isEmpty(date1)){
-    date1 = weekEarlier.toISOString().substring(0,10).replace(/\-/,''); 
+  if (!date1){
+    date1 = weekEarlier.toISOString().substring(0,10).replace(/\-/,'').replace(/\-/,''); 
   }
   var sql = "SELECT fd.avgFB, g.name, g.id FROM (SELECT round(AVG(f.rating),1) as avgFB, "+
   "f.game_id from feedback f where timestamp between ? and ? GROUP BY f.game_id) fd "+
