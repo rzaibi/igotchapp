@@ -20,53 +20,11 @@ let options = {
   signed: true  
 }
 //--------------------------------------------------------
-app.post('/login', (req, res) => { 
-  let user = req.body;
-  
-  if (user.username === 'admin') {
-    if (user.password != 'admin')
-      return res.json({});
-
-      user = {'username':'admin', 'id':0, 'name':'Administrator'}
-
-      res.cookie('user',user, options);
-     return res.json({'username':'admin'});
-  }     
-
-  var db = dbConnect();
-  var sql = "SELECT id, username, name from users where username = ? and password = ? limit 1";
-  
-  db.get(sql, [user.username, user.password], (err, row) => {     
-    if (err) { 
-      db.close();
-      return res.json({});
-    }
-    if (row){
-      sql = "update users set last_login = (strftime('%Y%m%d%H%M%S',datetime('now','localtime'))) where id = ?";
-      db.run(sql, [row.id],function(err){
-        db.close();
-        
-        if (err){
-          console.log("User login update failed, user id = "+row.id);
-        }
-      }); 
-    }else{
-      db.close();
-    }
-
-    user = {'username': row.username, 'id': row.id, 'name':row.name};
-    res.cookie('user', user, options);
-    return res.json(user);
-  }); 
-});
-//--------------------------------------------------------
-app.get('/logout', (req, res) => {
-  res.clearCookie('user').end();
-});
-//--------------------------------------------------------
+//----------------------------------------------------------------------
 app.post('/rate', (req, res) => { 
-  let params = req.body;
-  var db = dbConnect(); 
+   let params = req.body;
+   var db = dbConnect(); 
+   
    db.get("select * from games where id = ?", [params.gameID], (err, row) => {     
     if (err) { 
       db.close();
@@ -112,9 +70,50 @@ app.post('/rate', (req, res) => {
   });
 });   
 //-------------------------------------------------------------------
-function getRatings(params){
-  return true;
-}
+app.get("/ratings", (req, res)=>{
+  var db = dbConnect(); 
+  var date1 = req.date1;
+  var date2 = req.date2;
+  var curDate = new Date();
+  var weekEarlier = new Date();
+   weekEarlier.setDate(weekEarlier.getDate() - 7);
+
+  if (isEmpty(date2)){
+    date2 = curDate.toISOString().substring(0,10).replace(/\-/,''); 
+  }
+  if (isEmpty(date1)){
+    date1 = weekEarlier.toISOString().substring(0,10).replace(/\-/,''); 
+  }
+  var sql = "SELECT fd.avgFB, g.name, g.id FROM (SELECT round(AVG(f.rating),1) as avgFB, "+
+  "f.game_id from feedback f where timestamp between ? and ? GROUP BY f.game_id) fd "+
+  "LEFT JOIN games g ON g.id = fd.game_id";
+  db.all(sql,[ date1,  date2],(err, rows ) => { 
+    db.close();
+    if (err) {
+       return res.json({'error':err.message});
+    }
+    return res.json(rows);
+  });
+});
+//-------------------------------------------------------------------
+app.get("/games", (req, res)=>{
+  var db = dbConnect(); 
+
+  var sql = "SELECT g.*, g.id as gameID, f.id feedbackID, f.rating FROM games g  left join feedback f on f.game_id = g.id and f.user_id =  ?";
+  db.all(sql,[req.cookies.user.id],(err, rows ) => {
+     db.close();
+      if (err) {
+         return res.json({'error':err.message});
+      }
+       return res.json(rows);
+  });
+});
+ 
+//-------------------------------------------------------------------
+app.get('/logout', (req, res) => {
+  res.clearCookie('game').end(); 
+  res.clearCookie('user').end();    
+});
 //--------------------------------------------------------------------------------------
 app.get('/*', (req, res) => {  
     res.sendFile(path.join(__dirname, '../build/index.html'));
