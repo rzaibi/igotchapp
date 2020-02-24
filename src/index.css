@@ -7,7 +7,71 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,body{
+  width: 100%; 
+  height: 100%
+}
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+#root{
+   background-color: #fafafa;
+   width: 100%; height: 100%;
+   display: table;
+}
+#header{
+  background-color: #369; color: white;
+  border-bottom: 2px solid black;
+  height: 60px; width: 100%;
+  display: table;
+  text-align: center;
+  font-size: 14pt;
+  font-weight: bold;
+}
+#login-container{ 
+  max-width: 100%;
+   max-width: 360px;
+   margin: 0 auto;
+   margin-top: 70px; 
+}
+#login-form{
+  border: 1px solid lightgray;
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  border-radius: 10px;
+}
+#login-form label{
+  width: 100%;
+  font-weight: bold;  
+  margin-top: 15px;
+}
+#login-form input{
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid lightgray;
+  height: 35px;
+} 
+#login-form button{
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid lightgray;
+  background-color: #136;
+  height: 40px;
+  margin-top: 10px;
+  color: white;
+} 
+#msgHolder{
+  color: red;  
+}
+.avatar-container{
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+}
+.avatar-container img{
+  height: 200px;
+  border-radius: 50%;
+}
+
