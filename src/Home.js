@@ -8,8 +8,9 @@ import $ from 'jquery';
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    var curGame = cookie.load('game')?JSON.parse(cookie.load('game')):{'name':'', 'id':''};
-    this.state = {comment:'', rating: '', data:[], game:curGame, games:[]};
+    var gamecookie = cookie.load('mygame', { path: '/' });
+    gamecookie = gamecookie? gamecookie:{'name':'', 'id':''};
+    this.state = {feedback:'', rating: '', data:[], game:gamecookie, games:[]};
   }
   //----------------------------------------------------------------------
    onChange = (e) => { 
@@ -20,11 +21,13 @@ class Home extends React.Component {
      e.preventDefault();
 
      try {
-      let res = await axios.post('/rate', this.state);         
+      let res = await axios.post('/rate', {'rating': this.state.rating, 'feedback': this.state.feedback});         
       if (res.data.error){
         return alert(res.data.error);  
       }
-      return alert(res.data.success);  
+      alert(res.data.success);
+      cookie.remove('mygame', { path: '/' });
+      window.location.reload();  
     } catch (e) {
       alert("System error occurred: "+e.message);
     }
@@ -36,15 +39,15 @@ class Home extends React.Component {
     try {
        var i =  e.target.name.substring(1);
        var game = this.state.data[i];
-    /*   cookie.save('game', game.id, { path: '/' });
-       window.location.reload();*/
+       cookie.save('mygame',  game, { path: '/' });
+       window.location.reload();
    } catch (e) {
      alert("System error occurred: "+e.message);
    }
  } 
  //-----------------------------------
  backToGames(){
-    cookie.remove('game', { path: '/' });
+    cookie.remove('mygame', { path: '/' });
     window.location.reload();
  }
 //-------------------------------------------------------------
@@ -72,7 +75,7 @@ class Home extends React.Component {
       
       }
 
-      if (!cookie.load('game')){
+      if (!cookie.load('mygame')){
         if (this.state.data.length == 0)
         axios.get('/games', {})
         .then(res => this.setState({ data: res.data }))
@@ -97,11 +100,12 @@ class Home extends React.Component {
       }       
       
       return (
-         <div>
+         <div id='rateGameDiv'>
            <h2>Rate {this.state.game.name}</h2>
            <form onSubmit = {this.rateForm} id='ratingForm'>
              <label>Rating</label>
                 <select name='rating' onChange = {this.onChange}>
+                  <option value=''>Select rating</option>
                   <option value='1'>1</option>
                   <option value='2'>2</option>
                   <option value='3'>3</option>
@@ -109,10 +113,11 @@ class Home extends React.Component {
                   <option value='5'>5</option>
                 </select><br/>
                 <label>Feedback</label>
-                <input type='text'  onChange = {this.onChange} name='feedback'/>  
+                <input type='text'  onChange = {this.onChange} name='feedback' id='feedbackInput'/>  
               <button>Rate Game</button>
            </form>
-           <button onClick={this.backToGames}>Back to game List</button>
+           <br/>
+           <button onClick={this.backToGames}><b>Back to game List</b></button>
          </div>
       )  
   }
