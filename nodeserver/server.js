@@ -121,7 +121,58 @@ app.get('/logout', (req, res) => {
   res.clearCookie('game').end(); 
   res.clearCookie('user').end();    
 });
-//--------------------------------------------------------------------------------------
-app.get('/*', (req, res) => {  
-    res.sendFile(path.join(__dirname, '../build/index.html'));
+//-------------------------------------------------------------------
+app.get('/getRatings', (req, res) => { 
+     res.json(getRatings(req));
 });
+//----------------------------------------------------------------------
+app.post('/login', (req, res) => { 
+  let user = req.body;
+  
+  if (user.username === 'admin') {
+    if (user.password != 'admin')
+      return res.json({});
+
+      user = {'username':'admin', 'id':0, 'name':'Administrator'}
+
+      res.cookie('user',user, options);
+     return res.json({'username':'admin'});
+  }     
+
+  var db = dbConnect();
+  var sql = "SELECT id, username, name from users where username = ? and password = ? limit 1";
+  
+  db.get(sql, [user.username, user.password], (err, row) => {     
+    if (err) { 
+      db.close();
+      return res.json({});
+    }
+    if (row){
+      sql = "update users set last_login = (strftime('%Y%m%d%H%M%S',datetime('now','localtime'))) where id = ?";
+      db.run(sql, [row.id],function(err){
+        db.close();
+        
+        if (err){
+          console.log("User login update failed, user id = "+row.id);
+        }
+      }); 
+    }else{
+      db.close();
+    }
+
+    user = {'username': row.username, 'id': row.id, 'name':row.name};
+    res.cookie('user', user, options);
+    return res.json(user);
+  }); 
+});
+
+//----------------------------------------------------------------------
+
+app
+  .use(express.static(path.join(__dirname, '../build')))
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+   
+app.get('/*', (req, res) => { 
+      res.sendFile(path.join(__dirname, '../build/index.html'));
+});
+
