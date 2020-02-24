@@ -15,9 +15,35 @@ app
 const PORT = process.env.PORT || 6000;
 
 let options = {
-  maxAge: 1000 * 60 * 30, 
-  httpOnly: false,  
+  maxAge: 1000 * 60 * 30, //30 minutes session
+  httpOnly: false,  //accessible by ReactJS
   signed: true  
+}
+//--------------------------------------------------------
+app.get('/login', (req, res) => {
+  var user = req.body;
+  if (user.username === 'admin') {
+    if (user.password != '!Gotchapp1Admin2')
+      return res.json({});
+
+    user = {'username':'admin', 'id':0, 'name':'Administrator'}
+    res.cookie('user', user, options);
+    return res.json({'username':'admin'});
+  }     
+
+  res.cookie('user', {'username':user.username, 'id':user.id, 'name':user.name}, options);
+});
+//--------------------------------------------------------
+app.get('/logout', (req, res) => {
+  res.clearCookie('user').end();
+});
+//-------------------------------------------------------------------
+function rategame(params){
+  return true;
+}
+//-------------------------------------------------------------------
+function getRatings(params){
+  return true;
 }
 //--------------------------------------------------------------------------------------
 app.get('/*', (req, res) => {  
