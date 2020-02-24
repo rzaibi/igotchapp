@@ -8,6 +8,9 @@ app.use(cookieParser('12e3e538a0105aabc61f3854e3e515ad'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app
+  .use(express.static(path.join(__dirname, '../build')))
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const PORT = process.env.PORT || 6000;
 
@@ -16,7 +19,11 @@ let options = {
   httpOnly: false,  
   signed: true  
 }
-
+//--------------------------------------------------------------------------------------
+app.get('/*', (req, res) => {  
+    res.sendFile(path.join(__dirname, '../build/index.html'));
+});
+//--------------------------------------------------------------------------------------
 function dbConnect (){
   let db = new sqlite3.Database('../db/igotchapp.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
